@@ -11,15 +11,15 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/features/auth/auth-context";
-import { SettingsProvider } from "@/context/settings-context";
+import { AppProvider } from "@/context/AppContext";
+import { ContextBellProvider } from "@/features/recording/ContextBellProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-gradient">404</h1>
+        <h1 className="text-7xl font-bold text-foreground">404</h1>
         <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
         <p className="mt-2 text-sm text-muted-foreground">
           The page you're looking for doesn't exist or has been moved.
@@ -80,37 +80,25 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "ContextBell — AI That Explains Your Own Lecture" },
+      { title: "ContextBell — AI That Understands Your Lecture" },
       {
         name: "description",
         content:
-          "Record only the confusing part of a lecture. ContextBell turns it into AI context and explains it in your teacher's terms — with notes, MCQs, flashcards and viva prep.",
+          "Ring the bell when you get confused. ContextBell captures the surrounding lecture audio, transcribes it, and explains it with lecture-grounded AI.",
       },
-      { name: "author", content: "ContextBell" },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "ContextBell — AI That Explains Your Own Lecture" },
-      { name: "twitter:title", content: "ContextBell — AI That Explains Your Own Lecture" },
+      { name: "author", content: "Team ContextBell" },
+      { property: "og:title", content: "ContextBell — AI That Understands Your Lecture" },
       {
         property: "og:description",
         content:
-          "Record only the confusing part of a lecture. ContextBell turns it into AI context and explains it in your teacher's terms — with notes, MCQs, flashcards and viva prep.",
+          "Ring the bell when you get confused. ContextBell captures the surrounding lecture audio, transcribes it, and explains it with lecture-grounded AI.",
       },
-      {
-        name: "twitter:description",
-        content:
-          "Record only the confusing part of a lecture. ContextBell turns it into AI context and explains it in your teacher's terms — with notes, MCQs, flashcards and viva prep.",
-      },
-      {
-        property: "og:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9fb5658c-67b2-4444-abf6-8c05895a4567/id-preview-06b380d7--6a5da904-5b01-48fb-a094-aa26e4de8dae.lovable.app-1785440105156.png",
-      },
-      {
-        name: "twitter:image",
-        content:
-          "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/9fb5658c-67b2-4444-abf6-8c05895a4567/id-preview-06b380d7--6a5da904-5b01-48fb-a094-aa26e4de8dae.lovable.app-1785440105156.png",
-      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "ContextBell — AI That Understands Your Lecture" },
+      { name: "twitter:description", content: "Ring the bell when you get confused. ContextBell captures the surrounding lecture audio, transcribes it, and explains it with lecture-grounded AI." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a31f20d2-ff03-455d-83d6-1f20842b5e62/id-preview-941d1829--2d69c09d-324f-4ba6-af05-10974d7c9ea6.lovable.app-1785524667361.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a31f20d2-ff03-455d-83d6-1f20842b5e62/id-preview-941d1829--2d69c09d-324f-4ba6-af05-10974d7c9ea6.lovable.app-1785524667361.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
@@ -118,13 +106,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap",
       },
-      {
-        rel: "stylesheet",
-        href: "https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css",
-      },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
   shellComponent: RootShell,
@@ -152,13 +136,13 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SettingsProvider>
-        <AuthProvider>
-          {/* Required: nested routes render here. */}
+      <AppProvider>
+        <ContextBellProvider>
+          {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
           <Outlet />
-          <Toaster position="top-center" />
-        </AuthProvider>
-      </SettingsProvider>
+          <Toaster position="top-center" richColors />
+        </ContextBellProvider>
+      </AppProvider>
     </QueryClientProvider>
   );
 }

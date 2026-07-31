@@ -1,252 +1,261 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { motion } from "framer-motion";
 import {
-  ArrowRight,
   Bell,
   BookOpen,
-  BrainCircuit,
-  FileText,
+  Brain,
+  FileDown,
+  GraduationCap,
   Mic,
-  MessagesSquare,
-  Sparkle,
+  MonitorPlay,
+  ShieldCheck,
+  Sparkles,
+  Video,
   Youtube,
 } from "lucide-react";
+import heroImage from "@/assets/hero-contextbell.jpg";
 import { Button } from "@/components/ui/button";
-import { BrandMark } from "@/components/app-shell";
-import { useSettings } from "@/context/settings-context";
-import { useAuth } from "@/features/auth/auth-context";
+import { useApp } from "@/context/AppContext";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "ContextBell — AI That Explains Your Own Lecture" },
+      { title: "ContextBell — AI That Understands Your Lecture" },
       {
         name: "description",
         content:
-          "Record only the confusing part of a lecture. ContextBell turns it into AI context and explains it in your teacher's terms — with notes, MCQs, flashcards and viva prep.",
+          "Ring the bell when you get confused. ContextBell captures the surrounding lecture audio, transcribes it, and explains it with lecture-grounded AI.",
       },
-      { property: "og:title", content: "ContextBell — AI That Explains Your Own Lecture" },
+      { property: "og:title", content: "ContextBell — AI That Understands Your Lecture" },
       {
         property: "og:description",
         content:
-          "Record only the confusing part of a lecture. ContextBell turns it into AI context and explains it in your teacher's terms — with notes, MCQs, flashcards and viva prep.",
+          "Ring the bell when you get confused. ContextBell captures the surrounding lecture audio, transcribes it, and explains it with lecture-grounded AI.",
       },
     ],
   }),
   component: Landing,
 });
 
+const SOURCES = [
+  { icon: GraduationCap, label: "Offline Classroom" },
+  { icon: Youtube, label: "YouTube" },
+  { icon: MonitorPlay, label: "Google Meet" },
+  { icon: Video, label: "Zoom" },
+  { icon: Mic, label: "Uploaded Audio" },
+  { icon: Video, label: "Uploaded Video" },
+];
+
 const FEATURES = [
   {
-    icon: Mic,
-    title: "Record the confusing minute",
-    body: "One tap captures just the part you didn't get. Speech becomes searchable transcript instantly.",
+    icon: Bell,
+    title: "Ring at the moment of confusion",
+    body: "A rolling audio buffer means the context is already saved. Pick a 20, 30, 45 or 60 second window and ContextBell grabs the lecture around that timestamp.",
   },
   {
-    icon: BrainCircuit,
-    title: "Transcript-first answers",
-    body: "The assistant answers from your recording first, and flags clearly whenever it goes beyond it.",
-  },
-  {
-    icon: FileText,
-    title: "Auto study kit",
-    body: "Every answer generates summary, revision notes, MCQs, flashcards, viva and interview questions.",
-  },
-  {
-    icon: Youtube,
-    title: "Learn along with video",
-    body: "Search lectures, hit a confusing explanation, record it, and ask ContextBell right away.",
-  },
-  {
-    icon: MessagesSquare,
-    title: "ChatGPT-grade chat",
-    body: "Streaming answers, markdown, math, code blocks, renaming, search and local chat history.",
+    icon: Brain,
+    title: "Transcript-first AI",
+    body: "Answers are grounded in what your teacher actually said. Anything beyond it is clearly flagged as extending past your lecture context.",
   },
   {
     icon: BookOpen,
-    title: "Notes you own",
-    body: "Pin, edit and export AI notes as PDF or Markdown. Everything lives on your device.",
+    title: "Study Packs on demand",
+    body: "Notes, mind maps, MCQs, flashcards, viva questions, cheat sheets, books and roadmaps — generated from your lecture, not the internet.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Strict Mode focus",
+    body: "Keep the AI on the captured topic plus one supporting concept so you never lose lecture continuity.",
   },
 ];
 
-const STEPS = [
-  { n: "01", t: "Record", d: "Capture the confusing explanation from class or a video." },
-  { n: "02", t: "Transcribe", d: "ContextBell converts the audio into lecture context." },
-  { n: "03", t: "Ask", d: '"What did the teacher mean?" — answered from your recording.' },
-  { n: "04", t: "Revise", d: "Turn the answer into notes, flashcards and exam questions." },
-];
-
 function Landing() {
-  const { settings, toggleTheme } = useSettings();
-  const { user } = useAuth();
+  const { user } = useApp();
+  const primaryTo = user?.role === "teacher" ? "/teacher" : "/dashboard";
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background">
-      <div className="aurora" aria-hidden />
+    <div className="relative min-h-screen overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="animate-aurora absolute -left-32 -top-32 size-[36rem] rounded-full bg-primary/20 blur-3xl" />
+        <div className="animate-aurora absolute -right-24 top-40 size-[30rem] rounded-full bg-accent/20 blur-3xl [animation-delay:-8s]" />
+      </div>
 
-      <header className="relative z-10 mx-auto flex max-w-6xl items-center justify-between px-5 py-5">
-        <BrandMark />
+      <header className="relative mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
+        <div className="flex items-center gap-2.5">
+          <span className="gradient-gold flex size-9 items-center justify-center rounded-xl shadow-glow">
+            <Bell className="size-4 text-accent-foreground" />
+          </span>
+          <span className="font-display text-lg font-semibold">ContextBell</span>
+        </div>
+        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+          <Link to="/youtube" className="transition-colors hover:text-foreground">
+            YouTube Learning
+          </Link>
+          <Link to="/record" className="transition-colors hover:text-foreground">
+            Record Context
+          </Link>
+          <Link to="/credits" className="transition-colors hover:text-foreground">
+            Credits
+          </Link>
+          <Link to="/about" className="transition-colors hover:text-foreground">
+            About
+          </Link>
+        </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={toggleTheme}>
-            {settings.theme === "dark" ? "Light" : "Dark"}
+          <Button variant="ghost" asChild>
+            <Link to="/login">Log in</Link>
           </Button>
-          <Button variant="ghost" size="sm" asChild>
-            <Link to="/about">About</Link>
+          <Button asChild>
+            <Link to={user ? primaryTo : "/signup"}>{user ? "Open app" : "Get started"}</Link>
           </Button>
-          {user ? (
-            <Button size="sm" asChild>
-              <Link to="/dashboard">Open app</Link>
-            </Button>
-          ) : (
-            <>
-              <Button variant="outline" size="sm" asChild>
-                <Link to="/login">Log in</Link>
-              </Button>
-              <Button size="sm" asChild>
-                <Link to="/signup">Get started</Link>
-              </Button>
-            </>
-          )}
         </div>
       </header>
 
-      <main className="relative z-10 mx-auto max-w-6xl px-5 pb-24">
-        <section className="grid items-center gap-10 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-20">
-          <motion.div
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <span className="inline-flex items-center gap-2 rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground glass">
-              <Sparkle className="size-3.5 text-accent" /> Contextual AI for students
-            </span>
-            <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.05] sm:text-6xl">
-              The AI that explains <span className="text-gradient">your lecture</span>, not the
-              internet's.
-            </h1>
-            <p className="mt-5 max-w-xl text-base text-muted-foreground sm:text-lg">
-              Record only the confusing part of a class. ContextBell turns that audio into context
-              and answers your questions the way your teacher actually taught it.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Button size="lg" asChild className="gap-2">
-                <Link to={user ? "/record" : "/signup"}>
-                  <Mic className="size-4" /> Record your first context
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild className="gap-2">
-                <Link to="/chat">
-                  Try the chatbot <ArrowRight className="size-4" />
-                </Link>
-              </Button>
-            </div>
-            <div className="mt-8 flex flex-wrap gap-6 text-sm text-muted-foreground">
-              <span>🎙️ 30-second capture</span>
-              <span>🧠 Transcript-first answers</span>
-              <span>🔒 Stored on your device</span>
-            </div>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.94 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="glass-card relative p-6"
-          >
-            <div className="flex items-center gap-3">
-              <span className="grid size-10 place-items-center rounded-xl bg-gradient-hero">
-                <Bell className="size-5 text-primary-foreground" />
+      <section className="relative mx-auto grid max-w-6xl items-center gap-10 px-5 pb-16 pt-10 lg:grid-cols-2">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <span className="glass inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium">
+            <Sparkles className="size-3.5 text-accent" /> Contextual learning, not generic answers
+          </span>
+          <h1 className="mt-5 font-display text-4xl font-semibold leading-[1.08] sm:text-5xl lg:text-6xl">
+            The AI that knows <span className="text-gradient">what your teacher just said</span>
+          </h1>
+          <p className="mt-5 max-w-xl text-base text-muted-foreground">
+            ChatGPT never attended your lecture. ContextBell keeps a rolling buffer of the class, and
+            the moment you get confused you ring the bell — it captures the surrounding lecture
+            audio, transcribes it, and explains that exact moment.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Button size="lg" asChild>
+              <Link to={user ? primaryTo : "/signup"}>
+                <Bell className="size-4" /> Start learning contextually
+              </Link>
+            </Button>
+            <Button size="lg" variant="secondary" asChild>
+              <Link to="/youtube">
+                <Youtube className="size-4" /> Try YouTube Learning
+              </Link>
+            </Button>
+          </div>
+          <div className="mt-8 flex flex-wrap gap-2">
+            {SOURCES.map((s) => (
+              <span
+                key={s.label}
+                className="glass flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium"
+              >
+                <s.icon className="size-3.5 text-accent" />
+                {s.label}
               </span>
-              <div>
-                <p className="text-sm font-medium">Recording · Signals & Systems</p>
-                <p className="text-xs text-muted-foreground">00:42 captured · transcript ready</p>
-              </div>
-            </div>
-            <div className="mt-5 flex h-16 items-end gap-1">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <motion.span
-                  key={i}
-                  className="flex-1 rounded-full bg-primary/60"
-                  animate={{ height: [`${12 + ((i * 13) % 40)}%`, `${30 + ((i * 29) % 70)}%`] }}
-                  transition={{
-                    duration: 0.9 + (i % 5) * 0.12,
-                    repeat: Infinity,
-                    repeatType: "reverse",
-                    ease: "easeInOut",
-                  }}
-                />
-              ))}
-            </div>
-            <div className="mt-6 space-y-3">
-              <div className="ml-auto max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground">
-                What did the teacher mean by "convolution flips the signal"?
-              </div>
-              <div className="max-w-[92%] rounded-2xl rounded-bl-sm border border-border/60 bg-secondary/50 px-4 py-3 text-sm">
-                From your recording: your teacher described flipping <em>h(t)</em> around the y-axis
-                and sliding it across <em>x(t)</em>…
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Grounded in your 42-second recording.
-                </p>
-              </div>
-            </div>
-          </motion.div>
-        </section>
+            ))}
+          </div>
+        </motion.div>
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.94 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
+          className="relative"
+        >
+          <div className="glass animate-float-slow overflow-hidden rounded-[2rem] p-2">
+            <img
+              src={heroImage}
+              alt="ContextBell capturing lecture audio context around a student's moment of confusion"
+              className="w-full rounded-[1.6rem] object-cover"
+              loading="eager"
+            />
+          </div>
+          <div className="glass absolute -bottom-6 left-6 rounded-2xl px-4 py-3">
+            <p className="text-[11px] text-muted-foreground">Context window</p>
+            <p className="font-display text-lg font-semibold">30s around your confusion</p>
+          </div>
+        </motion.div>
+      </section>
+
+      <section className="relative mx-auto max-w-6xl px-5 py-14">
+        <h2 className="font-display text-2xl font-semibold sm:text-3xl">How ContextBell works</h2>
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
+          {[
+            { step: "01", title: "Attend", body: "ContextBell buffers your lecture from any source." },
+            { step: "02", title: "Ring", body: "Confused? Tap the bell and pick your context window." },
+            { step: "03", title: "Transcribe", body: "The surrounding segment becomes an accurate transcript." },
+            { step: "04", title: "Understand", body: "The chatbot opens and explains that lecture moment." },
+          ].map((s, i) => (
+            <motion.div
+              key={s.step}
+              initial={{ opacity: 0, y: 18 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.08, duration: 0.5 }}
+              className="glass card-hover rounded-3xl p-5"
+            >
+              <span className="text-gradient font-display text-2xl font-bold">{s.step}</span>
+              <p className="mt-2 font-display text-base font-semibold">{s.title}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{s.body}</p>
+            </motion.div>
+          ))}
+        </div>
+      </section>
+
+      <section className="relative mx-auto max-w-6xl px-5 pb-16">
+        <div className="grid gap-4 md:grid-cols-2">
           {FEATURES.map((f, i) => (
             <motion.div
               key={f.title}
               initial={{ opacity: 0, y: 18 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ delay: i * 0.05, duration: 0.45 }}
-              whileHover={{ y: -5 }}
-              className="glass-card p-5"
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.06, duration: 0.5 }}
+              className="glass card-hover rounded-3xl p-6"
             >
-              <span className="grid size-10 place-items-center rounded-xl bg-primary/15 text-primary">
+              <span className="gradient-hero flex size-10 items-center justify-center rounded-2xl text-primary-foreground">
                 <f.icon className="size-5" />
               </span>
-              <h3 className="mt-4 font-display text-base font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
+              <h3 className="mt-4 font-display text-lg font-semibold">{f.title}</h3>
+              <p className="mt-2 text-sm text-muted-foreground">{f.body}</p>
             </motion.div>
           ))}
-        </section>
+        </div>
+      </section>
 
-        <section className="mt-20">
-          <h2 className="text-center font-display text-3xl font-semibold">How ContextBell works</h2>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {STEPS.map((s, i) => (
-              <motion.div
-                key={s.n}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.07 }}
-                className="glass-card p-5"
-              >
-                <p className="font-mono text-sm text-accent">{s.n}</p>
-                <h3 className="mt-2 font-display text-lg font-semibold">{s.t}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        <section className="glass-card mt-20 flex flex-col items-center gap-4 p-10 text-center">
-          <h2 className="font-display text-3xl font-semibold">Stop re-watching whole lectures.</h2>
-          <p className="max-w-lg text-muted-foreground">
-            Capture the 40 seconds that confused you and let ContextBell teach it back to you.
+      <section className="relative mx-auto max-w-6xl px-5 pb-20">
+        <div className="glass flex flex-col items-center gap-4 rounded-[2rem] p-10 text-center">
+          <FileDown className="size-8 text-accent" />
+          <h2 className="font-display text-2xl font-semibold sm:text-3xl">
+            Turn one confusing minute into a full study pack
+          </h2>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Detailed notes, mind maps, MCQs, viva and interview questions, flashcards, cheat sheets,
+            recommended books and a learning roadmap — exportable as PDF or Markdown.
           </p>
-          <Button size="lg" asChild className="gap-2">
-            <Link to={user ? "/dashboard" : "/signup"}>
-              Get started free <ArrowRight className="size-4" />
-            </Link>
+          <Button size="lg" asChild>
+            <Link to={user ? primaryTo : "/signup"}>Create my first study pack</Link>
           </Button>
-        </section>
-      </main>
+        </div>
+      </section>
 
-      <footer className="relative z-10 border-t border-border/60 px-5 py-6 text-center text-xs text-muted-foreground">
-        ContextBell · Hackathon MVP · Your data stays in your browser
+      <footer className="relative border-t border-border/60 py-8">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-5 text-xs text-muted-foreground sm:flex-row">
+          <p>© {new Date().getFullYear()} ContextBell · Hackathon MVP</p>
+          <div className="flex gap-4">
+            <Link to="/credits" className="hover:text-foreground">
+              Credits
+            </Link>
+            <Link to="/about" className="hover:text-foreground">
+              About
+            </Link>
+            <a
+              href="https://insights-ai.info/"
+              target="_blank"
+              rel="noreferrer noopener"
+              className="hover:text-foreground"
+            >
+              iNSIGHTS AI
+            </a>
+          </div>
+        </div>
       </footer>
     </div>
   );

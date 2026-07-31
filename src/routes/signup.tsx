@@ -1,125 +1,149 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Loader2, Lock, Mail, User } from "lucide-react";
+import { useState } from "react";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { motion } from "framer-motion";
+import { Bell, GraduationCap, Presentation } from "lucide-react";
 import { toast } from "sonner";
-import { AuthLayout } from "@/features/auth/auth-layout";
-import { useAuth } from "@/features/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useApp } from "@/context/AppContext";
+import { cn } from "@/lib/utils";
+import type { Role } from "@/types";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Create your account · ContextBell" },
+      { title: "Create your ContextBell account" },
       {
         name: "description",
-        content:
-          "Create a free ContextBell account and start turning confusing lecture moments into clear AI explanations.",
+        content: "Join ContextBell as a student or teacher and start learning from lecture context.",
       },
-      { property: "og:title", content: "Create your account · ContextBell" },
-      {
-        property: "og:description",
-        content: "Start learning from your own recorded lecture context.",
-      },
+      { property: "og:title", content: "Create your ContextBell account" },
+      { property: "og:description", content: "Contextual AI learning built for real lectures." },
     ],
   }),
   component: SignupPage,
 });
 
 function SignupPage() {
-  const { signup, user, hydrated } = useAuth();
-  const router = useRouter();
+  const { signIn } = useApp();
+  const navigate = useNavigate();
+  const [role, setRole] = useState<Role>("student");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [institution, setInstitution] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    if (hydrated && user) router.navigate({ to: "/dashboard" });
-  }, [hydrated, user, router]);
-
-  const submit = async (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error("Use at least 6 characters for your password.");
+    if (!name.trim() || !email.trim() || password.length < 4) {
+      toast.error("Fill in your name, email and a password of at least 4 characters");
       return;
     }
-    setLoading(true);
-    try {
-      await signup(name, email, password);
-      toast.success(`Welcome to ContextBell, ${name.split(" ")[0]}!`);
-      router.navigate({ to: "/dashboard" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not create account");
-    } finally {
-      setLoading(false);
-    }
+    const user = signIn({
+      name: name.trim(),
+      email: email.trim(),
+      role,
+      ...(institution.trim() ? { institution: institution.trim() } : {}),
+    });
+    toast.success(`Account created · ID ${user.studentId}`);
+    navigate({ to: role === "teacher" ? "/teacher" : "/dashboard" });
   };
 
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Two fields, zero setup. Everything stays on your device."
-      footer={
-        <>
-          Already have an account?{" "}
-          <Link to="/login" className="font-medium text-primary hover:underline">
-            Sign in
-          </Link>
-        </>
-      }
-    >
-      <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="name">Full name</Label>
-          <div className="relative">
-            <User className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="name"
-              required
-              placeholder="Abhishek Kumar"
-              className="pl-9"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
-          </div>
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-5 py-12">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="animate-aurora absolute -right-32 top-10 size-[32rem] rounded-full bg-accent/20 blur-3xl" />
+        <div className="animate-aurora absolute -left-24 bottom-0 size-[28rem] rounded-full bg-primary/20 blur-3xl [animation-delay:-9s]" />
+      </div>
+
+      <motion.form
+        onSubmit={submit}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="glass relative w-full max-w-md rounded-[2rem] p-8"
+      >
+        <Link to="/" className="flex items-center gap-2.5">
+          <span className="gradient-gold flex size-9 items-center justify-center rounded-xl shadow-glow">
+            <Bell className="size-4 text-accent-foreground" />
+          </span>
+          <span className="font-display text-lg font-semibold">ContextBell</span>
+        </Link>
+
+        <h1 className="mt-6 font-display text-2xl font-semibold">Create your account</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Who are you?</p>
+
+        <div className="mt-4 grid grid-cols-2 gap-3">
+          {(
+            [
+              { id: "student", label: "Student", icon: GraduationCap },
+              { id: "teacher", label: "Teacher", icon: Presentation },
+            ] as const
+          ).map((r) => (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => setRole(r.id)}
+              className={cn(
+                "flex flex-col items-center gap-2 rounded-2xl border px-4 py-4 text-sm transition-all",
+                role === r.id
+                  ? "border-accent bg-accent/10 font-semibold shadow-glow"
+                  : "border-border/60 hover:bg-muted/60",
+              )}
+            >
+              <r.icon className="size-5" />
+              {r.label}
+            </button>
+          ))}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <div className="relative">
-            <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+
+        <div className="mt-5 space-y-3">
+          <div>
+            <Label htmlFor="name">Full name</Label>
+            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Shreya Kumari" />
+          </div>
+          <div>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              required
-              placeholder="you@college.edu"
-              className="pl-9"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@college.edu"
             />
           </div>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <div>
+            <Label htmlFor="institution">College / Institution</Label>
+            <Input
+              id="institution"
+              value={institution}
+              onChange={(e) => setInstitution(e.target.value)}
+              placeholder="IGDTUW"
+            />
+          </div>
+          <div>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               type="password"
-              required
-              placeholder="At least 6 characters"
-              className="pl-9"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••"
             />
           </div>
         </div>
-        <Button type="submit" className="w-full gap-2" size="lg" disabled={loading}>
-          {loading && <Loader2 className="size-4 animate-spin" />}
-          {loading ? "Creating account…" : "Create account"}
+
+        <Button type="submit" size="lg" className="mt-5 w-full">
+          Create {role} account
         </Button>
-      </form>
-    </AuthLayout>
+        <p className="mt-4 text-center text-xs text-muted-foreground">
+          Already registered?{" "}
+          <Link to="/login" className="text-accent underline decoration-dotted">
+            Log in
+          </Link>
+        </p>
+      </motion.form>
+    </div>
   );
 }

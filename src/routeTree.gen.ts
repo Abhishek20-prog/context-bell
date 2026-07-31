@@ -12,19 +12,23 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as BookmarksRouteImport } from './routes/bookmarks'
-import { Route as ChatRouteImport } from './routes/chat'
+import { Route as CreditsRouteImport } from './routes/credits'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as NotesRouteImport } from './routes/notes'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RecordRouteImport } from './routes/record'
+import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as StudyPacksRouteImport } from './routes/study-packs'
+import { Route as TeacherRouteImport } from './routes/teacher'
 import { Route as YoutubeRouteImport } from './routes/youtube'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
-import { Route as ApiStudyKitRouteImport } from './routes/api/study-kit'
+import { Route as ApiStudyPackRouteImport } from './routes/api/study-pack'
 import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
-import { Route as ApiYoutubeRouteImport } from './routes/api/youtube'
+import { Route as ChatIndexRouteImport } from './routes/chat.index'
+import { Route as ChatChatIdRouteImport } from './routes/chat.$chatId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -41,9 +45,9 @@ const BookmarksRoute = BookmarksRouteImport.update({
   path: '/bookmarks',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ChatRoute = ChatRouteImport.update({
-  id: '/chat',
-  path: '/chat',
+const CreditsRoute = CreditsRouteImport.update({
+  id: '/credits',
+  path: '/credits',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -71,6 +75,11 @@ const RecordRoute = RecordRouteImport.update({
   path: '/record',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SessionsRoute = SessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -79,6 +88,16 @@ const SettingsRoute = SettingsRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StudyPacksRoute = StudyPacksRouteImport.update({
+  id: '/study-packs',
+  path: '/study-packs',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TeacherRoute = TeacherRouteImport.update({
+  id: '/teacher',
+  path: '/teacher',
   getParentRoute: () => rootRouteImport,
 } as any)
 const YoutubeRoute = YoutubeRouteImport.update({
@@ -91,9 +110,9 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiStudyKitRoute = ApiStudyKitRouteImport.update({
-  id: '/api/study-kit',
-  path: '/api/study-kit',
+const ApiStudyPackRoute = ApiStudyPackRouteImport.update({
+  id: '/api/study-pack',
+  path: '/api/study-pack',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
@@ -101,9 +120,14 @@ const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
   path: '/api/transcribe',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiYoutubeRoute = ApiYoutubeRouteImport.update({
-  id: '/api/youtube',
-  path: '/api/youtube',
+const ChatIndexRoute = ChatIndexRouteImport.update({
+  id: '/chat/',
+  path: '/chat/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChatChatIdRoute = ChatChatIdRouteImport.update({
+  id: '/chat/$chatId',
+  path: '/chat/$chatId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -111,56 +135,68 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/bookmarks': typeof BookmarksRoute
-  '/chat': typeof ChatRoute
+  '/credits': typeof CreditsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
+  '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/study-packs': typeof StudyPacksRoute
+  '/teacher': typeof TeacherRoute
   '/youtube': typeof YoutubeRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/study-kit': typeof ApiStudyKitRoute
+  '/api/study-pack': typeof ApiStudyPackRoute
   '/api/transcribe': typeof ApiTranscribeRoute
-  '/api/youtube': typeof ApiYoutubeRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/chat/': typeof ChatIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/bookmarks': typeof BookmarksRoute
-  '/chat': typeof ChatRoute
+  '/credits': typeof CreditsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
+  '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/study-packs': typeof StudyPacksRoute
+  '/teacher': typeof TeacherRoute
   '/youtube': typeof YoutubeRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/study-kit': typeof ApiStudyKitRoute
+  '/api/study-pack': typeof ApiStudyPackRoute
   '/api/transcribe': typeof ApiTranscribeRoute
-  '/api/youtube': typeof ApiYoutubeRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/chat': typeof ChatIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
   '/bookmarks': typeof BookmarksRoute
-  '/chat': typeof ChatRoute
+  '/credits': typeof CreditsRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/notes': typeof NotesRoute
   '/profile': typeof ProfileRoute
   '/record': typeof RecordRoute
+  '/sessions': typeof SessionsRoute
   '/settings': typeof SettingsRoute
   '/signup': typeof SignupRoute
+  '/study-packs': typeof StudyPacksRoute
+  '/teacher': typeof TeacherRoute
   '/youtube': typeof YoutubeRoute
   '/api/chat': typeof ApiChatRoute
-  '/api/study-kit': typeof ApiStudyKitRoute
+  '/api/study-pack': typeof ApiStudyPackRoute
   '/api/transcribe': typeof ApiTranscribeRoute
-  '/api/youtube': typeof ApiYoutubeRoute
+  '/chat/$chatId': typeof ChatChatIdRoute
+  '/chat/': typeof ChatIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -168,74 +204,90 @@ export interface FileRouteTypes {
     | '/'
     | '/about'
     | '/bookmarks'
-    | '/chat'
+    | '/credits'
     | '/dashboard'
     | '/login'
     | '/notes'
     | '/profile'
     | '/record'
+    | '/sessions'
     | '/settings'
     | '/signup'
+    | '/study-packs'
+    | '/teacher'
     | '/youtube'
     | '/api/chat'
-    | '/api/study-kit'
+    | '/api/study-pack'
     | '/api/transcribe'
-    | '/api/youtube'
+    | '/chat/$chatId'
+    | '/chat/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/about'
     | '/bookmarks'
-    | '/chat'
+    | '/credits'
     | '/dashboard'
     | '/login'
     | '/notes'
     | '/profile'
     | '/record'
+    | '/sessions'
     | '/settings'
     | '/signup'
+    | '/study-packs'
+    | '/teacher'
     | '/youtube'
     | '/api/chat'
-    | '/api/study-kit'
+    | '/api/study-pack'
     | '/api/transcribe'
-    | '/api/youtube'
+    | '/chat/$chatId'
+    | '/chat'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/bookmarks'
-    | '/chat'
+    | '/credits'
     | '/dashboard'
     | '/login'
     | '/notes'
     | '/profile'
     | '/record'
+    | '/sessions'
     | '/settings'
     | '/signup'
+    | '/study-packs'
+    | '/teacher'
     | '/youtube'
     | '/api/chat'
-    | '/api/study-kit'
+    | '/api/study-pack'
     | '/api/transcribe'
-    | '/api/youtube'
+    | '/chat/$chatId'
+    | '/chat/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
   BookmarksRoute: typeof BookmarksRoute
-  ChatRoute: typeof ChatRoute
+  CreditsRoute: typeof CreditsRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   NotesRoute: typeof NotesRoute
   ProfileRoute: typeof ProfileRoute
   RecordRoute: typeof RecordRoute
+  SessionsRoute: typeof SessionsRoute
   SettingsRoute: typeof SettingsRoute
   SignupRoute: typeof SignupRoute
+  StudyPacksRoute: typeof StudyPacksRoute
+  TeacherRoute: typeof TeacherRoute
   YoutubeRoute: typeof YoutubeRoute
   ApiChatRoute: typeof ApiChatRoute
-  ApiStudyKitRoute: typeof ApiStudyKitRoute
+  ApiStudyPackRoute: typeof ApiStudyPackRoute
   ApiTranscribeRoute: typeof ApiTranscribeRoute
-  ApiYoutubeRoute: typeof ApiYoutubeRoute
+  ChatChatIdRoute: typeof ChatChatIdRoute
+  ChatIndexRoute: typeof ChatIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -261,11 +313,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BookmarksRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/chat': {
-      id: '/chat'
-      path: '/chat'
-      fullPath: '/chat'
-      preLoaderRoute: typeof ChatRouteImport
+    '/credits': {
+      id: '/credits'
+      path: '/credits'
+      fullPath: '/credits'
+      preLoaderRoute: typeof CreditsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -303,6 +355,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RecordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sessions': {
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -315,6 +374,20 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/study-packs': {
+      id: '/study-packs'
+      path: '/study-packs'
+      fullPath: '/study-packs'
+      preLoaderRoute: typeof StudyPacksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/teacher': {
+      id: '/teacher'
+      path: '/teacher'
+      fullPath: '/teacher'
+      preLoaderRoute: typeof TeacherRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/youtube': {
@@ -331,11 +404,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/study-kit': {
-      id: '/api/study-kit'
-      path: '/api/study-kit'
-      fullPath: '/api/study-kit'
-      preLoaderRoute: typeof ApiStudyKitRouteImport
+    '/api/study-pack': {
+      id: '/api/study-pack'
+      path: '/api/study-pack'
+      fullPath: '/api/study-pack'
+      preLoaderRoute: typeof ApiStudyPackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/transcribe': {
@@ -345,11 +418,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTranscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/youtube': {
-      id: '/api/youtube'
-      path: '/api/youtube'
-      fullPath: '/api/youtube'
-      preLoaderRoute: typeof ApiYoutubeRouteImport
+    '/chat/': {
+      id: '/chat/'
+      path: '/chat'
+      fullPath: '/chat/'
+      preLoaderRoute: typeof ChatIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chat/$chatId': {
+      id: '/chat/$chatId'
+      path: '/chat/$chatId'
+      fullPath: '/chat/$chatId'
+      preLoaderRoute: typeof ChatChatIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -359,30 +439,24 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
   BookmarksRoute: BookmarksRoute,
-  ChatRoute: ChatRoute,
+  CreditsRoute: CreditsRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   NotesRoute: NotesRoute,
   ProfileRoute: ProfileRoute,
   RecordRoute: RecordRoute,
+  SessionsRoute: SessionsRoute,
   SettingsRoute: SettingsRoute,
   SignupRoute: SignupRoute,
+  StudyPacksRoute: StudyPacksRoute,
+  TeacherRoute: TeacherRoute,
   YoutubeRoute: YoutubeRoute,
   ApiChatRoute: ApiChatRoute,
-  ApiStudyKitRoute: ApiStudyKitRoute,
+  ApiStudyPackRoute: ApiStudyPackRoute,
   ApiTranscribeRoute: ApiTranscribeRoute,
-  ApiYoutubeRoute: ApiYoutubeRoute,
+  ChatChatIdRoute: ChatChatIdRoute,
+  ChatIndexRoute: ChatIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

@@ -1,14 +1,14 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { motion } from "framer-motion";
 import {
-  Activity,
+  Bell,
   BookMarked,
-  Clock,
+  BookOpen,
   Flame,
   MessageSquare,
-  Mic,
   NotebookPen,
-  Play,
-  Sparkle,
+  Timer,
+  TrendingUp,
 } from "lucide-react";
 import {
   Area,
@@ -19,307 +19,239 @@ import {
   ResponsiveContainer,
   Tooltip,
   XAxis,
+  YAxis,
 } from "recharts";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { EmptyState, SectionCard, StatCard } from "@/components/ui-kit";
-import { useAuth } from "@/features/auth/auth-context";
-import { useLocalStore } from "@/hooks/use-local-store";
-import { KEYS } from "@/lib/storage";
-import type { ActivityItem, Bookmark, ChatSession, LearningStats, Note, Recording } from "@/types";
+import { useApp } from "@/context/AppContext";
+import { useContextBell } from "@/features/recording/ContextBellProvider";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
     meta: [
-      { title: "Dashboard · ContextBell" },
+      { title: "Student Dashboard — ContextBell" },
       {
         name: "description",
-        content:
-          "Track your learning streak, recordings, chats, notes and study progress in ContextBell.",
+        content: "Track your learning streak, lecture sessions, notes, study packs and progress.",
       },
-      { property: "og:title", content: "Dashboard · ContextBell" },
-      { property: "og:description", content: "Your contextual learning command center." },
+      { property: "og:title", content: "Student Dashboard — ContextBell" },
+      { property: "og:description", content: "Your contextual learning progress at a glance." },
     ],
   }),
-  component: DashboardPage,
+  component: Dashboard,
 });
 
-const ICONS: Record<ActivityItem["type"], typeof Mic> = {
-  recording: Mic,
-  chat: MessageSquare,
-  note: NotebookPen,
-  video: Play,
-  auth: Sparkle,
-};
+function Dashboard() {
+  const { data, user, hydrated } = useApp();
+  const bell = useContextBell();
+  const { sessions, chats, notes, bookmarks, studyPacks, progress } = data;
 
-function DashboardPage() {
-  const { user } = useAuth();
-  const recordings = useLocalStore<Recording[]>(KEYS.recordings, []).value;
-  const chats = useLocalStore<ChatSession[]>(KEYS.chats, []).value;
-  const notes = useLocalStore<Note[]>(KEYS.notes, []).value;
-  const bookmarks = useLocalStore<Bookmark[]>(KEYS.bookmarks, []).value;
-  const activity = useLocalStore<ActivityItem[]>(KEYS.activity, []).value;
-  const stats = useLocalStore<LearningStats>(KEYS.stats, {
-    streak: 1,
-    minutes: 0,
-    lastActive: new Date().toISOString(),
-    history: [],
-  }).value;
+  const stats = [
+    { label: "Learning streak", value: `${progress.streak} days`, icon: Flame },
+    { label: "Sessions captured", value: sessions.length, icon: Bell },
+    { label: "Study packs", value: studyPacks.length, icon: BookOpen },
+    { label: "Minutes studied", value: progress.minutesStudied, icon: Timer },
+  ];
 
-  const chartData = buildChart(stats);
-  const learningHours = Math.round((stats.minutes / 60) * 10) / 10;
-  const goal = Math.min(100, Math.round((stats.minutes / 120) * 100));
-  const lastChat = chats[0];
+  const weekly = progress.weekly;
+  const topicProgress = progress.topicsLearned.slice(0, 5);
 
   return (
     <AppShell
-      title={`Welcome back, ${user?.name.split(" ")[0] ?? "learner"} 👋`}
-      subtitle={`User ID ${user?.id} · joined ${new Date(user?.joinedAt ?? Date.now()).toLocaleDateString()}`}
-      action={
-        <Button asChild size="sm" className="gap-2">
-          <Link to="/record">
-            <Mic className="size-4" /> Record Context
-          </Link>
-        </Button>
-      }
+      title={`Welcome back${user ? `, ${user.name.split(" ")[0]}` : ""}`}
+      subtitle={user ? `${user.role === "teacher" ? "Faculty" : "Student"} ID · ${user.studentId}` : "Sign in to save your progress"}
     >
-      <div className="mx-auto max-w-6xl space-y-6">
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={Flame}
-            label="Learning streak"
-            value={`${stats.streak}d`}
-            hint="Keep it alive today"
-            accent
-            delay={0}
-          />
-          <StatCard
-            icon={Clock}
-            label="Learning hours"
-            value={learningHours}
-            hint={`${Math.round(stats.minutes)} minutes total`}
-            delay={0.05}
-          />
-          <StatCard
-            icon={Mic}
-            label="Recordings"
-            value={recordings.length}
-            hint="Contexts captured"
-            delay={0.1}
-          />
-          <StatCard
-            icon={MessageSquare}
-            label="Chats"
-            value={chats.length}
-            hint="AI conversations"
-            delay={0.15}
-          />
+      {!user && (
+        <div className="glass mb-5 flex flex-wrap items-center justify-between gap-3 rounded-3xl p-5">
+          <p className="text-sm text-muted-foreground">
+            You're browsing as a guest. Create an account to keep sessions, notes and study packs.
+          </p>
+          <Button asChild>
+            <Link to="/signup">Create account</Link>
+          </Button>
         </div>
+      )}
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            icon={NotebookPen}
-            label="Notes"
-            value={notes.length}
-            hint={`${notes.filter((n) => n.pinned).length} pinned`}
-            delay={0.05}
-          />
-          <StatCard
-            icon={BookMarked}
-            label="Bookmarks"
-            value={bookmarks.length}
-            hint="Saved for later"
-            accent
-            delay={0.1}
-          />
-          <div className="glass-card p-5 sm:col-span-2">
-            <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-              Weekly goal · 2 hours
-            </p>
-            <p className="mt-3 font-display text-3xl font-semibold">{goal}%</p>
-            <Progress value={goal} className="mt-3" />
-            <p className="mt-2 text-xs text-muted-foreground">
-              {goal >= 100
-                ? "Goal smashed — go deeper on revision."
-                : "Record one more confusing concept to move ahead."}
-            </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((s, i) => (
+          <motion.div
+            key={s.label}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+            className="glass card-hover rounded-3xl p-5"
+          >
+            <span className="gradient-hero flex size-9 items-center justify-center rounded-xl text-primary-foreground">
+              <s.icon className="size-4" />
+            </span>
+            <p className="mt-3 font-display text-2xl font-semibold">{hydrated ? s.value : "—"}</p>
+            <p className="text-xs text-muted-foreground">{s.label}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="glass rounded-3xl p-5 lg:col-span-2">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="font-display text-base font-semibold">Weekly learning activity</h2>
+              <p className="text-xs text-muted-foreground">Doubts rung & minutes studied</p>
+            </div>
+            <TrendingUp className="size-4 text-accent" />
+          </div>
+          <div className="mt-4 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={weekly}>
+                <defs>
+                  <linearGradient id="minutes" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="var(--color-chart-1)" stopOpacity={0.6} />
+                    <stop offset="95%" stopColor="var(--color-chart-1)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="day" stroke="var(--color-muted-foreground)" fontSize={11} />
+                <YAxis stroke="var(--color-muted-foreground)" fontSize={11} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--color-card)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                />
+                <Area type="monotone" dataKey="minutes" stroke="var(--color-chart-1)" fill="url(#minutes)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.3fr_1fr]">
-          <SectionCard title="Study minutes" description="Last 7 days of focused learning">
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartData}>
-                  <defs>
-                    <linearGradient id="minutesFill" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="var(--color-chart-1)" stopOpacity={0.55} />
-                      <stop offset="100%" stopColor="var(--color-chart-1)" stopOpacity={0.02} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid vertical={false} stroke="var(--color-border)" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    fontSize={12}
-                    stroke="var(--color-muted-foreground)"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--color-popover)",
-                      border: "1px solid var(--color-border)",
-                      borderRadius: 12,
-                      fontSize: 12,
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="minutes"
-                    stroke="var(--color-chart-1)"
-                    strokeWidth={2.5}
-                    fill="url(#minutesFill)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </SectionCard>
-
-          <SectionCard title="Questions asked" description="Chat volume per day">
-            <div className="h-56">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData}>
-                  <CartesianGrid vertical={false} stroke="var(--color-border)" />
-                  <XAxis
-                    dataKey="label"
-                    tickLine={false}
-                    axisLine={false}
-                    fontSize={12}
-                    stroke="var(--color-muted-foreground)"
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--color-popover)",
-                      border: "1px solid var(--color-border)",
-                      borderRadius: 12,
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar dataKey="chats" fill="var(--color-chart-2)" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </SectionCard>
+        <div className="glass rounded-3xl p-5">
+          <h2 className="font-display text-base font-semibold">Doubts per day</h2>
+          <div className="mt-4 h-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weekly}>
+                <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                <XAxis dataKey="day" stroke="var(--color-muted-foreground)" fontSize={11} />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--color-card)",
+                    border: "1px solid var(--color-border)",
+                    borderRadius: 12,
+                    fontSize: 12,
+                  }}
+                />
+                <Bar dataKey="doubts" fill="var(--color-chart-2)" radius={[6, 6, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
+      </div>
 
-        <div className="grid gap-4 lg:grid-cols-2">
-          <SectionCard
-            title="Continue learning"
-            description="Pick up where you left off"
-            action={
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/chat">Open chat</Link>
-              </Button>
-            }
-          >
-            {lastChat ? (
-              <Link
-                to="/chat"
-                search={{ session: lastChat.id }}
-                className="flex items-center gap-4 rounded-xl border border-border/60 bg-secondary/40 p-4 transition-colors hover:bg-secondary"
-              >
-                <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/15 text-primary">
-                  <MessageSquare className="size-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{lastChat.title}</p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {lastChat.messages.length} messages · updated{" "}
-                    {new Date(lastChat.updatedAt).toLocaleString()}
+      <div className="mt-4 grid gap-4 lg:grid-cols-3">
+        <div className="glass rounded-3xl p-5">
+          <h2 className="font-display text-base font-semibold">Recent lecture sessions</h2>
+          {sessions.length === 0 ? (
+            <EmptyState
+              text="No sessions yet. Ring the ContextBell during a lecture."
+              action={
+                <Button size="sm" onClick={() => bell.setPanelOpen(true)}>
+                  <Bell className="size-3.5" /> Start capture
+                </Button>
+              }
+            />
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {sessions.slice(0, 5).map((s) => (
+                <li key={s.id} className="rounded-2xl border border-border/60 p-3">
+                  <p className="truncate text-sm font-medium">{s.title}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {s.source} · {s.contextWindow}s window · {new Date(s.createdAt).toLocaleString()}
                   </p>
-                </div>
-              </Link>
-            ) : (
-              <EmptyState
-                icon={Mic}
-                title="No sessions yet"
-                description="Record a confusing explanation and ContextBell will answer from it."
-                action={
-                  <Button asChild size="sm">
-                    <Link to="/record">Record context</Link>
-                  </Button>
-                }
-              />
-            )}
-
-            {recordings.length > 0 && (
-              <div className="mt-4 space-y-2">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Recent recordings
-                </p>
-                {recordings.slice(0, 3).map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-3 py-2.5 text-sm"
-                  >
-                    <span className="min-w-0 truncate">{r.title}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {Math.round(r.durationSec)}s
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </SectionCard>
-
-          <SectionCard title="Recent activity" description="Everything you did lately">
-            {activity.length === 0 ? (
-              <EmptyState
-                icon={Activity}
-                title="Nothing here yet"
-                description="Your recordings, chats and notes will show up here."
-              />
-            ) : (
-              <ul className="space-y-2">
-                {activity.slice(0, 8).map((a) => {
-                  const Icon = ICONS[a.type] ?? Activity;
-                  return (
-                    <li
-                      key={a.id}
-                      className="flex items-start gap-3 rounded-xl px-2 py-2 hover:bg-secondary/50"
-                    >
-                      <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-secondary text-primary">
-                        <Icon className="size-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm">{a.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(a.createdAt).toLocaleString()}
-                        </p>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </SectionCard>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
+
+        <div className="glass rounded-3xl p-5">
+          <h2 className="font-display text-base font-semibold">Recent AI chats</h2>
+          {chats.length === 0 ? (
+            <EmptyState text="Your conversations will appear here." />
+          ) : (
+            <ul className="mt-3 space-y-2">
+              {chats.slice(0, 5).map((c) => (
+                <li key={c.id}>
+                  <Link
+                    to="/chat/$chatId"
+                    params={{ chatId: c.id }}
+                    className="flex items-center gap-2 rounded-2xl border border-border/60 p-3 text-sm transition-colors hover:bg-muted/60"
+                  >
+                    <MessageSquare className="size-3.5 text-accent" />
+                    <span className="truncate">{c.title}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div className="glass rounded-3xl p-5">
+          <h2 className="font-display text-base font-semibold">Topics learned</h2>
+          {topicProgress.length === 0 ? (
+            <EmptyState text="Capture a lecture to build your topic map." />
+          ) : (
+            <div className="mt-3 space-y-3">
+              {topicProgress.map((t, i) => (
+                <div key={t}>
+                  <p className="truncate text-xs font-medium">{t}</p>
+                  <Progress value={Math.max(30, 95 - i * 12)} className="mt-1.5 h-1.5" />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-4 sm:grid-cols-3">
+        <QuickCard to="/notes" icon={NotebookPen} label="Saved notes" count={notes.length} />
+        <QuickCard to="/bookmarks" icon={BookMarked} label="Bookmarks" count={bookmarks.length} />
+        <QuickCard to="/study-packs" icon={BookOpen} label="Study packs" count={studyPacks.length} />
       </div>
     </AppShell>
   );
 }
 
-function buildChart(stats: LearningStats) {
-  const days = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date(Date.now() - (6 - i) * 86400000);
-    const key = d.toISOString().slice(0, 10);
-    const found = stats.history.find((h) => h.date === key);
-    return {
-      label: d.toLocaleDateString(undefined, { weekday: "short" }),
-      minutes: found?.minutes ?? 0,
-      chats: found?.chats ?? 0,
-    };
-  });
-  return days;
+function QuickCard({
+  to,
+  icon: Icon,
+  label,
+  count,
+}: {
+  to: string;
+  icon: typeof BookOpen;
+  label: string;
+  count: number;
+}) {
+  return (
+    <Link to={to} className="glass card-hover flex items-center justify-between rounded-3xl p-5">
+      <div className="flex items-center gap-3">
+        <span className="gradient-gold flex size-9 items-center justify-center rounded-xl text-accent-foreground">
+          <Icon className="size-4" />
+        </span>
+        <p className="text-sm font-medium">{label}</p>
+      </div>
+      <span className="font-display text-xl font-semibold">{count}</span>
+    </Link>
+  );
+}
+
+function EmptyState({ text, action }: { text: string; action?: React.ReactNode }) {
+  return (
+    <div className="mt-4 flex flex-col items-center gap-3 rounded-2xl border border-dashed border-border/70 p-6 text-center">
+      <Bell className="size-5 text-muted-foreground" />
+      <p className="text-xs text-muted-foreground">{text}</p>
+      {action}
+    </div>
+  );
 }

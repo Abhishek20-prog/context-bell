@@ -1,201 +1,115 @@
+import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Download, NotebookPen, Pin, PinOff, Plus, Search, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { NotebookPen, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { AppShell } from "@/components/app-shell";
-import { Markdown } from "@/components/markdown";
-import { EmptyState } from "@/components/ui-kit";
-import { Badge } from "@/components/ui/badge";
+import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useLocalStore } from "@/hooks/use-local-store";
-import { KEYS, logActivity, uid } from "@/lib/storage";
-import type { Note } from "@/types";
-import { cn } from "@/lib/utils";
+import { Markdown } from "@/components/Markdown";
+import { useApp } from "@/context/AppContext";
+import { uid } from "@/services/storage";
 
 export const Route = createFileRoute("/notes")({
   head: () => ({
     meta: [
-      { title: "Notes · ContextBell" },
+      { title: "My Lecture Notes — ContextBell" },
       {
         name: "description",
-        content: "Write, pin and export lecture notes alongside AI-generated revision material.",
+        content: "All notes saved from your lecture-grounded AI explanations, in one searchable place.",
       },
-      { property: "og:title", content: "Notes · ContextBell" },
-      {
-        property: "og:description",
-        content: "Your lecture notes and AI revision material in one place.",
-      },
+      { property: "og:title", content: "My Lecture Notes — ContextBell" },
+      { property: "og:description", content: "Keep every explanation your teacher gave, organised." },
     ],
   }),
   component: NotesPage,
 });
 
 function NotesPage() {
-  const { value: notes, setValue: setNotes } = useLocalStore<Note[]>(KEYS.notes, []);
+  const { data, addNote, deleteNote } = useApp();
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
   const [query, setQuery] = useState("");
-  const [activeId, setActiveId] = useState<string | null>(null);
 
-  const sorted = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return [...notes]
-      .filter((n) => !q || n.title.toLowerCase().includes(q) || n.content.toLowerCase().includes(q))
-      .sort(
-        (a, b) => Number(b.pinned) - Number(a.pinned) || b.updatedAt.localeCompare(a.updatedAt),
-      );
-  }, [notes, query]);
+  const notes = data.notes.filter(
+    (n) =>
+      !query.trim() ||
+      n.title.toLowerCase().includes(query.toLowerCase()) ||
+      n.body.toLowerCase().includes(query.toLowerCase()),
+  );
 
-  const active = sorted.find((n) => n.id === activeId) ?? sorted[0] ?? null;
-
-  const create = () => {
-    const note: Note = {
+  const save = () => {
+    if (!title.trim() || !body.trim()) {
+      toast.error("Add a title and some content");
+      return;
+    }
+    addNote({
       id: uid("note"),
-      title: "Untitled note",
-      content: "",
-      source: "manual",
-      pinned: false,
-      tags: [],
+      title: title.trim(),
+      body: body.trim(),
+      tags: ["manual"],
       createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    setNotes([note, ...notes]);
-    setActiveId(note.id);
-    logActivity("note", "Created a note");
-  };
-
-  const patch = (id: string, p: Partial<Note>) =>
-    setNotes(
-      notes.map((n) => (n.id === id ? { ...n, ...p, updatedAt: new Date().toISOString() } : n)),
-    );
-
-  const exportNote = (note: Note) => {
-    const blob = new Blob([`# ${note.title}\n\n${note.content}`], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${note.title.replace(/[^\w\s-]/g, "").trim() || "note"}.md`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Note exported as Markdown");
+    });
+    setTitle("");
+    setBody("");
+    toast.success("Note saved");
   };
 
   return (
-    <AppShell
-      title="Notes"
-      subtitle={`${notes.length} note${notes.length === 1 ? "" : "s"} saved on this device`}
-      action={
-        <Button size="sm" className="gap-2" onClick={create}>
-          <Plus className="size-4" /> New note
-        </Button>
-      }
-    >
-      {notes.length === 0 ? (
-        <EmptyState
-          icon={NotebookPen}
-          title="No notes yet"
-          description="Create a note manually, or save an AI answer from the chat to build your revision library."
-          action={
-            <Button className="gap-2" onClick={create}>
-              <Plus className="size-4" /> New note
-            </Button>
-          }
-        />
-      ) : (
-        <div className="grid gap-5 lg:grid-cols-[20rem_1fr]">
-          <div className="space-y-3">
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search notes"
-                className="pl-9"
-              />
-            </div>
-            <div className="space-y-2">
-              {sorted.map((n) => (
-                <button
-                  key={n.id}
-                  onClick={() => setActiveId(n.id)}
-                  className={cn(
-                    "w-full rounded-xl border p-3 text-left transition-colors",
-                    active?.id === n.id
-                      ? "border-primary/40 bg-secondary"
-                      : "border-border/60 hover:bg-secondary/60",
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    {n.pinned && <Pin className="size-3.5 shrink-0 text-primary" />}
-                    <p className="truncate text-sm font-medium">{n.title}</p>
-                  </div>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
-                    {n.content || "Empty note"}
-                  </p>
-                  <Badge variant="outline" className="mt-2 text-[10px]">
-                    {n.source === "ai" ? "AI generated" : "Manual"}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-          </div>
+    <AppShell title="Notes" subtitle="Saved explanations and your own revision notes">
+      <div className="grid gap-4 lg:grid-cols-[1fr_1.3fr]">
+        <div className="glass h-fit rounded-3xl p-5">
+          <h2 className="font-display text-base font-semibold">New note</h2>
+          <Input
+            className="mt-3"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Topic title"
+          />
+          <Textarea
+            className="mt-2 min-h-40"
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            placeholder="Markdown supported…"
+          />
+          <Button className="mt-3 w-full" onClick={save}>
+            <Plus className="size-4" /> Save note
+          </Button>
+        </div>
 
-          {active && (
-            <div className="glass-card space-y-4 p-5">
-              <Input
-                value={active.title}
-                onChange={(e) => patch(active.id, { title: e.target.value })}
-                className="border-0 bg-transparent px-0 text-lg font-semibold focus-visible:ring-0"
-              />
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => patch(active.id, { pinned: !active.pinned })}
-                >
-                  {active.pinned ? <PinOff className="size-3.5" /> : <Pin className="size-3.5" />}
-                  {active.pinned ? "Unpin" : "Pin"}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5"
-                  onClick={() => exportNote(active)}
-                >
-                  <Download className="size-3.5" /> Export
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="gap-1.5 text-destructive"
-                  onClick={() => {
-                    setNotes(notes.filter((n) => n.id !== active.id));
-                    setActiveId(null);
-                    toast.success("Note deleted");
-                  }}
-                >
-                  <Trash2 className="size-3.5" /> Delete
-                </Button>
-              </div>
-              <Textarea
-                value={active.content}
-                onChange={(e) => patch(active.id, { content: e.target.value })}
-                placeholder="Write in Markdown — headings, lists and $math$ are supported."
-                className="min-h-56 resize-y"
-              />
-              {active.content && (
-                <div className="rounded-xl border border-border/60 p-4">
-                  <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Preview
-                  </p>
-                  <Markdown>{active.content}</Markdown>
+        <div>
+          <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search notes" />
+          {notes.length === 0 ? (
+            <div className="glass mt-4 flex flex-col items-center gap-2 rounded-3xl p-12 text-center">
+              <NotebookPen className="size-6 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                No notes yet — save an AI explanation from any chat.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {notes.map((n) => (
+                <div key={n.id} className="glass rounded-3xl p-5">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-display text-base font-semibold">{n.title}</h3>
+                      <p className="text-[11px] text-muted-foreground">
+                        {new Date(n.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => deleteNote(n.id)}>
+                      <Trash2 className="size-4 text-destructive" />
+                    </Button>
+                  </div>
+                  <div className="mt-2 max-h-64 overflow-y-auto">
+                    <Markdown>{n.body}</Markdown>
+                  </div>
                 </div>
-              )}
+              ))}
             </div>
           )}
         </div>
-      )}
+      </div>
     </AppShell>
   );
 }

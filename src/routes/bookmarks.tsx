@@ -1,98 +1,84 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Bookmark, ExternalLink, Mic, Trash2, Youtube } from "lucide-react";
-import { toast } from "sonner";
-import { AppShell } from "@/components/app-shell";
-import { EmptyState } from "@/components/ui-kit";
-import { Badge } from "@/components/ui/badge";
+import { BookMarked, ExternalLink, Trash2 } from "lucide-react";
+import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
-import { useLocalStore } from "@/hooks/use-local-store";
-import { KEYS } from "@/lib/storage";
-import type { Bookmark as BookmarkType } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { useApp } from "@/context/AppContext";
 
 export const Route = createFileRoute("/bookmarks")({
   head: () => ({
     meta: [
-      { title: "Bookmarks · ContextBell" },
-      {
-        name: "description",
-        content: "Every lecture moment, answer and video you saved for later revision.",
-      },
-      { property: "og:title", content: "Bookmarks · ContextBell" },
-      {
-        property: "og:description",
-        content: "Saved lectures, answers and videos in one revision shelf.",
-      },
+      { title: "Bookmarks — ContextBell" },
+      { name: "description", content: "Your bookmarked lectures, chats, notes and study packs." },
+      { property: "og:title", content: "Bookmarks — ContextBell" },
+      { property: "og:description", content: "Everything you saved for later revision." },
     ],
   }),
   component: BookmarksPage,
 });
 
-export function BookmarksPage() {
-  const { value: bookmarks, setValue: setBookmarks } = useLocalStore<BookmarkType[]>(
-    KEYS.bookmarks,
-    [],
-  );
-
-  const iconFor = (kind: BookmarkType["kind"]) =>
-    kind === "video" ? Youtube : kind === "answer" ? Mic : Bookmark;
+function BookmarksPage() {
+  const { data, toggleBookmark } = useApp();
 
   return (
-    <AppShell
-      title="Bookmarks"
-      subtitle={`${bookmarks.length} saved item${bookmarks.length === 1 ? "" : "s"}`}
-    >
-      {bookmarks.length === 0 ? (
-        <EmptyState
-          icon={Bookmark}
-          title="Nothing bookmarked yet"
-          description="Save answers from chat or videos from the YouTube tab and they will appear here."
-          action={
-            <Button asChild className="gap-2">
-              <Link to="/chat">Open chat</Link>
-            </Button>
-          }
-        />
+    <AppShell title="Bookmarks" subtitle="Saved lectures, chats and study material">
+      {data.bookmarks.length === 0 ? (
+        <div className="glass flex flex-col items-center gap-3 rounded-3xl p-12 text-center">
+          <BookMarked className="size-7 text-muted-foreground" />
+          <h2 className="font-display text-lg font-semibold">Nothing bookmarked yet</h2>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Bookmark a YouTube lecture or an AI conversation to find it instantly later.
+          </p>
+          <Button asChild>
+            <Link to="/youtube">Browse YouTube Learning</Link>
+          </Button>
+        </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {bookmarks.map((b) => {
-            const Icon = iconFor(b.kind);
-            return (
-              <article key={b.id} className="glass-card flex flex-col p-4">
-                <div className="flex items-center gap-2">
-                  <span className="grid size-8 place-items-center rounded-lg bg-primary/12 text-primary">
-                    <Icon className="size-4" />
-                  </span>
-                  <Badge variant="outline" className="text-[10px] capitalize">
-                    {b.kind}
-                  </Badge>
-                </div>
-                <h2 className="mt-3 line-clamp-2 text-sm font-semibold">{b.title}</h2>
-                <p className="mt-1.5 line-clamp-3 flex-1 text-xs text-muted-foreground">
-                  {b.subtitle ?? b.content ?? ""}
-                </p>
-                <div className="mt-4 flex items-center gap-2">
-                  {b.url && (
-                    <Button size="sm" variant="outline" className="gap-1.5" asChild>
-                      <a href={b.url} target="_blank" rel="noreferrer">
-                        <ExternalLink className="size-3.5" /> Open
-                      </a>
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="gap-1.5 text-destructive"
-                    onClick={() => {
-                      setBookmarks(bookmarks.filter((x) => x.id !== b.id));
-                      toast.success("Bookmark removed");
-                    }}
+        <div className="grid gap-3 md:grid-cols-2">
+          {data.bookmarks.map((b) => (
+            <div key={b.id} className="glass card-hover flex items-start justify-between gap-3 rounded-3xl p-5">
+              <div className="min-w-0">
+                <Badge variant="secondary" className="capitalize">
+                  {b.kind}
+                </Badge>
+                <p className="mt-2 truncate text-sm font-medium">{b.title}</p>
+                <p className="text-[11px] text-muted-foreground">{new Date(b.createdAt).toLocaleString()}</p>
+                {b.url && (
+                  <a
+                    href={b.url}
+                    target="_blank"
+                    rel="noreferrer noopener"
+                    className="mt-1 inline-flex items-center gap-1 text-[11px] text-accent underline decoration-dotted"
                   >
-                    <Trash2 className="size-3.5" /> Remove
-                  </Button>
-                </div>
-              </article>
-            );
-          })}
+                    Open <ExternalLink className="size-3" />
+                  </a>
+                )}
+                {b.kind === "chat" && b.refId && (
+                  <Link
+                    to="/chat/$chatId"
+                    params={{ chatId: b.refId }}
+                    className="mt-1 block text-[11px] text-accent underline decoration-dotted"
+                  >
+                    Open conversation
+                  </Link>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() =>
+                  toggleBookmark({
+                    title: b.title,
+                    kind: b.kind,
+                    ...(b.refId ? { refId: b.refId } : {}),
+                    ...(b.url ? { url: b.url } : {}),
+                  })
+                }
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
         </div>
       )}
     </AppShell>
