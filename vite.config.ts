@@ -11,7 +11,12 @@ export default defineConfig({
   vite: {
     // Server-only secrets are intentionally not exposed as VITE_* variables.
     define: {
-      "process.env.GEMINI_API_KEY": JSON.stringify(loadEnv("", process.cwd(), "").GEMINI_API_KEY),
+      "process.env.GEMINI_API_KEY": JSON.stringify(
+        loadEnv("", process.cwd(), "")["GEMINI_API_KEY"] || loadEnv("", process.cwd(), "")["LOVABLE_API_KEY"],
+      ),
+      "process.env.LOVABLE_API_KEY": JSON.stringify(
+        loadEnv("", process.cwd(), "")["GEMINI_API_KEY"] || loadEnv("", process.cwd(), "")["LOVABLE_API_KEY"],
+      ),
     },
   },
   tanstackStart: {

@@ -4,7 +4,7 @@ import { BookOpen, FileDown, FileText, Trash2 } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Markdown } from "@/components/Markdown";
+import { Markdown } from "@/components/markdown";
 import { StudyPackDialog } from "@/features/studyPack/StudyPackDialog";
 import { useApp } from "@/context/AppContext";
 import { downloadMarkdown, downloadPdf } from "@/utils/export";

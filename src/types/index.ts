@@ -56,8 +56,12 @@ export interface Note {
   id: string;
   title: string;
   body: string;
+  content?: string;
+  source?: string;
+  pinned?: boolean;
   tags: string[];
   createdAt: string;
+  updatedAt?: string;
   sessionId?: string;
 }
 
@@ -146,3 +150,59 @@ export interface AppData {
   progress: LearningProgress;
   doubts: DoubtRecord[];
 }
+
+// ── Legacy / lib/storage types ──────────────────────────────────────────────
+// These are used by src/lib/storage.ts and src/features/chatbot/use-chat.ts
+// They represent an older storage schema that coexists with AppData.
+
+export interface Settings {
+  theme: "light" | "dark";
+  aiTone: "simple" | "balanced" | "exam";
+  streamResponses: boolean;
+  autoNotes: boolean;
+}
+
+export interface Recording {
+  id: string;
+  title: string;
+  transcript: string;
+  durationSec: number;
+  createdAt: string;
+  source?: string;
+}
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  recordingId: string | null;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface StudyKit {
+  summary: string;
+  revisionNotes: string[];
+  importantQuestions: string[];
+  mcqs: { question: string; options: string[]; answer: string }[];
+  flashcards: { front: string; back: string }[];
+  vivaQuestions: string[];
+  interviewQuestions: string[];
+  referenceBooks: { title: string; author: string; why: string }[];
+  referenceVideos: { title: string; channel: string; query: string }[];
+}
+
+export interface ActivityItem {
+  id: string;
+  type: "chat" | "recording" | "note" | "study-pack" | "bookmark";
+  label: string;
+  createdAt: string;
+}
+
+export interface LearningStats {
+  streak: number;
+  minutes: number;
+  lastActive: string;
+  history: { date: string; minutes: number; chats: number }[];
+}
+

@@ -30,7 +30,7 @@ export function MessageBubble({
 }: {
   message: ChatMessage;
   onGenerateKit: () => void;
-  kit?: StudyKit;
+  kit?: StudyKit | undefined;
   kitLoading: boolean;
 }) {
   const isUser = message.role === "user";
@@ -80,6 +80,7 @@ export function MessageBubble({
                 const note: Note = {
                   id: uid("note"),
                   title: message.content.slice(0, 48).replace(/[#*`]/g, "") || "AI note",
+                  body: message.content,
                   content: message.content,
                   source: "ai",
                   pinned: false,
@@ -170,6 +171,11 @@ export function StudyKitPanel({ kit }: { kit: StudyKit }) {
               const note: Note = {
                 id: uid("note"),
                 title: kit.summary.slice(0, 48) || "AI revision notes",
+                body: `## Summary\n${kit.summary}\n\n## Revision notes\n${kit.revisionNotes
+                  .map((n) => `- ${n}`)
+                  .join("\n")}\n\n## Important questions\n${kit.importantQuestions
+                  .map((q) => `- ${q}`)
+                  .join("\n")}`,
                 content: `## Summary\n${kit.summary}\n\n## Revision notes\n${kit.revisionNotes
                   .map((n) => `- ${n}`)
                   .join("\n")}\n\n## Important questions\n${kit.importantQuestions

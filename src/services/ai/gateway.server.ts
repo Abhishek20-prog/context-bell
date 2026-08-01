@@ -15,8 +15,8 @@ export function resolveModel(preferred?: string) {
 }
 
 function apiKey() {
-  const key = process.env["LOVABLE_API_KEY"];
-  if (!key) throw new Error("Missing LOVABLE_API_KEY");
+  const key = process.env["LOVABLE_API_KEY"] || process.env["GEMINI_API_KEY"];
+  if (!key) throw new Error("Missing LOVABLE_API_KEY or GEMINI_API_KEY");
   return key;
 }
 

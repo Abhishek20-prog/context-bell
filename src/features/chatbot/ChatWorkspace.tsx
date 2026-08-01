@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Markdown } from "@/components/Markdown";
+import { Markdown } from "@/components/markdown";
 import { StudyPackDialog } from "@/features/studyPack/StudyPackDialog";
 import { useApp } from "@/context/AppContext";
 import { streamChat, generateStudyPack } from "@/services/aiClient";

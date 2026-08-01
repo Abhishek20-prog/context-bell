@@ -52,15 +52,15 @@ function parseVideos(html: string): Video[] {
       return;
     }
     const obj = node as Record<string, unknown>;
-    const renderer = obj.videoRenderer;
-    if (isRecord(renderer) && typeof renderer.videoId === "string" && !seen.has(renderer.videoId)) {
-      const videoId = renderer.videoId;
+    const renderer = obj["videoRenderer"];
+    if (isRecord(renderer) && typeof renderer["videoId"] === "string" && !seen.has(renderer["videoId"])) {
+      const videoId = renderer["videoId"];
       seen.add(videoId);
       out.push({
         id: videoId,
-        title: rendererText(renderer.title) ?? "Untitled video",
+        title: rendererText(renderer["title"]) ?? "Untitled video",
         channel:
-          rendererText(renderer.ownerText) ?? rendererText(renderer.longBylineText) ?? "YouTube",
+          rendererText(renderer["ownerText"]) ?? rendererText(renderer["longBylineText"]) ?? "YouTube",
         thumbnail: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
       });
     }
@@ -75,7 +75,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function rendererText(value: unknown): string | undefined {
-  if (!isRecord(value) || !Array.isArray(value.runs)) return undefined;
-  const [firstRun] = value.runs;
-  return isRecord(firstRun) && typeof firstRun.text === "string" ? firstRun.text : undefined;
+  if (!isRecord(value) || !Array.isArray(value["runs"])) return undefined;
+  const [firstRun] = value["runs"];
+  return isRecord(firstRun) && typeof firstRun["text"] === "string" ? firstRun["text"] : undefined;
 }

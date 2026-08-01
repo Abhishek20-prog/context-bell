@@ -6,7 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Markdown } from "@/components/Markdown";
+import { Markdown } from "@/components/markdown";
 import { useApp } from "@/context/AppContext";
 import { uid } from "@/services/storage";
 

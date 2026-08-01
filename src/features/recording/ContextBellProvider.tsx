@@ -112,17 +112,18 @@ export function ContextBellProvider({ children }: { children: ReactNode }) {
       }
       setSource(chosen);
       try {
-        await recorder.start(config.mode);
+        const lang = settings.transcriptLanguage === "Auto detect" ? undefined : settings.transcriptLanguage;
+        await recorder.start(config.mode, lang);
         toast.success(
           config.mode === "tab-audio"
-            ? "Listening to shared audio — ContextBell is buffering the lecture"
-            : "Listening — ContextBell is buffering the lecture",
+            ? "Listening to shared audio — ContextBell is capturing lecture speech live"
+            : "Listening — ContextBell is capturing lecture speech live",
         );
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Could not start listening");
       }
     },
-    [recorder, source],
+    [recorder, settings.transcriptLanguage, source],
   );
 
   const ring = useCallback(async () => {
@@ -138,10 +139,15 @@ export function ContextBellProvider({ children }: { children: ReactNode }) {
     }
     setBusy(true);
     try {
-      const transcript = await transcribeSegment(
-        blob,
-        settings.transcriptLanguage === "Auto detect" ? undefined : settings.transcriptLanguage,
-      );
+      // 1. Try Browser Speech Recognition (100% FREE, zero API quota)
+      let transcript = recorder.captureTranscript(contextWindow);
+
+      // 2. Fall back to server transcription if browser speech captured nothing yet
+      if (!transcript) {
+        const lang = settings.transcriptLanguage === "Auto detect" ? undefined : settings.transcriptLanguage;
+        transcript = await transcribeSegment(blob, lang);
+      }
+
       await finalise(transcript, source, contextWindow);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Capture failed");

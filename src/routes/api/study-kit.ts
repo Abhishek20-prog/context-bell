@@ -12,7 +12,7 @@ export const Route = createFileRoute("/api/study-kit")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-       const key = process.env.LOVABLE_API_KEY;
+        const key = process.env["GEMINI_API_KEY"] || process.env["LOVABLE_API_KEY"];
         if (!key) return new Response("AI is not configured", { status: 500 });
         const body = (await request.json()) as Body;
         if (!body.answer || !body.question) {

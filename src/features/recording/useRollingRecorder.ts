@@ -3,16 +3,58 @@ import { encodeWav } from "@/utils/wav";
 
 export type CaptureMode = "microphone" | "tab-audio";
 
+interface SpeechRecognitionResultItem {
+  transcript: string;
+}
+interface SpeechRecognitionResultList {
+  [index: number]: {
+    [index: number]: SpeechRecognitionResultItem;
+    isFinal: boolean;
+  };
+  length: number;
+}
+interface SpeechRecognitionEvent {
+  resultIndex: number;
+  results: SpeechRecognitionResultList;
+}
+interface SpeechRecognitionErrorEvent {
+  error: string;
+}
+interface SpeechRecognitionInstance {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((e: SpeechRecognitionEvent) => void) | null;
+  onend: (() => void) | null;
+  onerror: ((e: SpeechRecognitionErrorEvent) => void) | null;
+  start: () => void;
+  stop: () => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition?: new () => SpeechRecognitionInstance;
+    webkitSpeechRecognition?: new () => SpeechRecognitionInstance;
+  }
+}
+
+interface SpeechEntry {
+  text: string;
+  ts: number;
+}
+
 /**
- * Keeps a rolling audio buffer in memory. Nothing is uploaded until the student
- * rings the ContextBell — then we slice the last N seconds surrounding that
- * moment of confusion and hand it to the transcription service.
+ * Keeps a rolling audio buffer and live browser speech recognition in memory.
+ * Uses the browser's built-in Web Speech API (100% free, zero external API keys).
+ * When the student rings the ContextBell, we extract the trailing speech transcript
+ * captured during that exact lecture window.
  */
-export function useRollingRecorder(maxSeconds = 120) {
+export function useRollingRecorder(maxSeconds = 150) {
   const [listening, setListening] = useState(false);
   const [level, setLevel] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [speechSupported, setSpeechSupported] = useState<boolean>(true);
 
   const streamRef = useRef<MediaStream | null>(null);
   const ctxRef = useRef<AudioContext | null>(null);
@@ -21,7 +63,96 @@ export function useRollingRecorder(maxSeconds = 120) {
   const samplesRef = useRef(0);
   const startedAt = useRef(0);
 
+  // Live browser speech recognition state
+  const speechLogRef = useRef<SpeechEntry[]>([]);
+  const interimTextRef = useRef<string>("");
+  const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
+  const shouldListenRef = useRef<boolean>(false);
+
+  // Check Web Speech API availability on mount
+  useEffect(() => {
+    const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    setSpeechSupported(!!SR);
+  }, []);
+
+  const stopSpeechRecognition = useCallback(() => {
+    shouldListenRef.current = false;
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
+        recognitionRef.current.stop();
+      } catch {
+        /* ignore */
+      }
+      recognitionRef.current = null;
+    }
+  }, []);
+
+  const startSpeechRecognition = useCallback((lang?: string) => {
+    const SR = typeof window !== "undefined" && (window.SpeechRecognition || window.webkitSpeechRecognition);
+    if (!SR) {
+      setSpeechSupported(false);
+      return;
+    }
+
+    stopSpeechRecognition();
+    shouldListenRef.current = true;
+
+    try {
+      const rec = new SR();
+      rec.continuous = true;
+      rec.interimResults = true;
+      rec.lang = lang && lang !== "Auto detect" ? lang : "en-US";
+
+      rec.onresult = (e: SpeechRecognitionEvent) => {
+        let currentInterim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const res = e.results[i];
+          if (!res) continue;
+          const transcriptText = res[0]?.transcript?.trim() ?? "";
+          if (!transcriptText) continue;
+
+          if (res.isFinal) {
+            speechLogRef.current.push({ text: transcriptText, ts: Date.now() });
+            // Clean up old log entries past maxSeconds
+            const cutoff = Date.now() - maxSeconds * 1000;
+            speechLogRef.current = speechLogRef.current.filter((entry) => entry.ts >= cutoff);
+          } else {
+            currentInterim = transcriptText;
+          }
+        }
+        interimTextRef.current = currentInterim;
+      };
+
+      rec.onend = () => {
+        // Auto-restart if recording is still active
+        if (shouldListenRef.current) {
+          try {
+            rec.start();
+          } catch {
+            /* ignore restart errors */
+          }
+        }
+      };
+
+      rec.onerror = (e: SpeechRecognitionErrorEvent) => {
+        if (e.error === "no-speech" || e.error === "aborted") return;
+        console.warn("Browser SpeechRecognition notice:", e.error);
+      };
+
+      recognitionRef.current = rec;
+      speechLogRef.current = [];
+      interimTextRef.current = "";
+      rec.start();
+    } catch (err) {
+      console.warn("Could not start Web Speech Recognition:", err);
+    }
+  }, [maxSeconds, stopSpeechRecognition]);
+
   const stop = useCallback(() => {
+    stopSpeechRecognition();
     nodeRef.current?.disconnect();
     ctxRef.current?.close().catch(() => undefined);
     streamRef.current?.getTracks().forEach((t) => t.stop());
@@ -30,7 +161,7 @@ export function useRollingRecorder(maxSeconds = 120) {
     streamRef.current = null;
     setListening(false);
     setLevel(0);
-  }, []);
+  }, [stopSpeechRecognition]);
 
   useEffect(() => () => stop(), [stop]);
 
@@ -41,7 +172,7 @@ export function useRollingRecorder(maxSeconds = 120) {
   }, [listening]);
 
   const start = useCallback(
-    async (mode: CaptureMode) => {
+    async (mode: CaptureMode, lang?: string) => {
       setError(null);
       try {
         const stream =
@@ -91,16 +222,19 @@ export function useRollingRecorder(maxSeconds = 120) {
         startedAt.current = Date.now();
         setElapsed(0);
         setListening(true);
+
+        // Start Browser Speech Recognition in parallel
+        startSpeechRecognition(lang);
       } catch (e) {
         const message = e instanceof Error ? e.message : "Could not access audio";
         setError(message);
         throw new Error(message);
       }
     },
-    [maxSeconds, stop],
+    [maxSeconds, startSpeechRecognition, stop],
   );
 
-  /** Slice the trailing `seconds` of the rolling buffer around this moment. */
+  /** Slice the trailing `seconds` of the rolling audio buffer around this moment. */
   const captureContext = useCallback((seconds: number): Blob | null => {
     const ctx = ctxRef.current;
     if (!ctx) return null;
@@ -117,5 +251,34 @@ export function useRollingRecorder(maxSeconds = 120) {
     return encodeWav(picked, ctx.sampleRate);
   }, []);
 
-  return { listening, level, elapsed, error, start, stop, captureContext };
+  /**
+   * Retrieves the speech transcript collected by the browser's Web Speech API
+   * during the last `seconds` window.
+   */
+  const captureTranscript = useCallback((seconds: number): string => {
+    const cutoff = Date.now() - seconds * 1000;
+    const pastFinals = speechLogRef.current
+      .filter((e) => e.ts >= cutoff)
+      .map((e) => e.text);
+
+    const parts = [...pastFinals];
+    if (interimTextRef.current && !parts.includes(interimTextRef.current)) {
+      parts.push(interimTextRef.current);
+    }
+
+    return parts.join(" ").trim();
+  }, []);
+
+  return {
+    listening,
+    level,
+    elapsed,
+    error,
+    speechSupported,
+    start,
+    stop,
+    captureContext,
+    captureTranscript,
+  };
 }
+

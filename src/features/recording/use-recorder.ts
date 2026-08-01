@@ -46,7 +46,7 @@ export function useRecorder() {
         const data = new Float32Array(e.inputBuffer.getChannelData(0));
         chunksRef.current.push(data);
         let peak = 0;
-        for (let i = 0; i < data.length; i += 32) peak = Math.max(peak, Math.abs(data[i]));
+        for (let i = 0; i < data.length; i += 32) peak = Math.max(peak, Math.abs(data[i] ?? 0));
         setLevel(peak);
       };
       source.connect(node);

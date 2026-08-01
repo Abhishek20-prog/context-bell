@@ -94,11 +94,12 @@ export function trackLearning(minutes: number, chats = 0) {
   const today = dayKey(new Date());
   const history = [...stats.history];
   const idx = history.findIndex((h) => h.date === today);
-  if (idx >= 0) {
+  const target = history[idx];
+  if (target) {
     history[idx] = {
-      ...history[idx],
-      minutes: history[idx].minutes + minutes,
-      chats: history[idx].chats + chats,
+      date: target.date,
+      minutes: target.minutes + minutes,
+      chats: target.chats + chats,
     };
   } else {
     history.push({ date: today, minutes, chats });

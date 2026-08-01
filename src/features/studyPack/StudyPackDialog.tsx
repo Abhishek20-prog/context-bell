@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Markdown } from "@/components/Markdown";
+import { Markdown } from "@/components/markdown";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApp } from "@/context/AppContext";
 import { generateStudyPack } from "@/services/aiClient";

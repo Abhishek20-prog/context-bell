@@ -25,7 +25,7 @@ async streamAnswer(
       "Content-Type": "application/json",
     },
     body: JSON.stringify(req),
-    signal,
+    ...(signal ? { signal } : {}),
   });
 
   if (!res.ok) {

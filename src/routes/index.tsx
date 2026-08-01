@@ -13,7 +13,7 @@ import {
   Video,
   Youtube,
 } from "lucide-react";
-import heroImage from "@/assets/hero-contextbell.jpg";
+import heroImage from "@/assests/hero-contextbell.jpg";
 import { Button } from "@/components/ui/button";
 import { useApp } from "@/context/AppContext";
 

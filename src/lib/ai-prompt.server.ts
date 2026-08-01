@@ -1,4 +1,5 @@
 export const MODEL = "gemini-2.5-flash";
+export const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 
 export type ToneKey = "simple" | "balanced" | "exam";

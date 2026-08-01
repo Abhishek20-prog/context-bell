@@ -14,7 +14,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
-import { AppShell } from "@/components/app-shell";
+import { AppShell } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -109,23 +109,22 @@ function ChatPage() {
           ? "Answers grounded in your recorded lecture transcript"
           : "No recording attached — answers will come from general knowledge"
       }
-      action={
-        <Button size="sm" variant="outline" className="gap-2" onClick={() => newSession()}>
-          <MessageSquarePlus className="size-4" /> New chat
-        </Button>
-      }
-      fullBleed
     >
       <div className="flex h-[calc(100vh-4.25rem)] min-h-0">
         <aside className="hidden w-72 shrink-0 flex-col border-r border-border/60 p-4 md:flex">
-          <div className="relative">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search chats"
-              className="pl-9"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
+          <div className="mb-3 flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search chats"
+                className="pl-9"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+            <Button size="icon" variant="outline" onClick={() => newSession()} aria-label="New chat">
+              <MessageSquarePlus className="size-4" />
+            </Button>
           </div>
           <div className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
             {filtered.length === 0 && (
